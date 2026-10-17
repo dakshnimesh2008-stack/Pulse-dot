@@ -1,20 +1,38 @@
-name: Build APK
-on: [push, workflow_dispatch]
+name: Deploy Pulse Clock to GitHub Pages
+
+on:
+push:
+branches: ["main"]
+workflow_dispatch:
+
+permissions:
+contents: read
+pages: write
+id-token: write
+
+concurrency:
+group: pages
+cancel-in-progress: true
+
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: unzip -q PulseDot.zip
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: 8.7
-      - run: cd PulseDot && gradle assembleDebug
-      - uses: actions/upload-artifact@v4
-        with:
-          name: PulseDot-apk
-          path: PulseDot/app/build/outputs/apk/debug/*.apk
+deploy:
+environment:
+name: github-pages
+url: ${{ steps.deployment.outputs.page_url }}
+runs-on: ubuntu-latest
+
+steps:
+  - name: Checkout
+    uses: actions/checkout@v4
+
+  - name: Configure Pages
+    uses: actions/configure-pages@v5
+
+  - name: Upload site artifact
+    uses: actions/upload-pages-artifact@v3
+    with:
+      path: "."
+
+  - name: Deploy to GitHub Pages
+    id: deployment
+    uses: actions/deploy-pages@v4
